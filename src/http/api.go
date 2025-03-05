@@ -4,19 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/cihub/seelog"
-	"github.com/smartping/smartping/src/funcs"
-	"github.com/smartping/smartping/src/g"
-	"github.com/smartping/smartping/src/nettools"
-	"github.com/wcharczuk/go-chart"
-	"github.com/wcharczuk/go-chart/drawing"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"smartping/src/funcs"
+	"smartping/src/g"
+	"smartping/src/nettools"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cihub/seelog"
+	"github.com/wcharczuk/go-chart"
+	"github.com/wcharczuk/go-chart/drawing"
 )
 
 func configApiRoutes() {
@@ -576,6 +577,7 @@ func configApiRoutes() {
 			GraphText(80, 70, "REQUEST API ERROR").Save(w)
 			return
 		}
+
 		defer resp.Body.Close()
 		if resp.StatusCode == 401 {
 			GraphText(80, 70, "401-UNAUTHORIZED").Save(w)
@@ -591,6 +593,7 @@ func configApiRoutes() {
 			GraphText(80, 70, "PARSE DATA ERROR").Save(w)
 			return
 		}
+
 		Xals := []float64{}
 		AvgDelay := []float64{}
 		LossPk := []float64{}
@@ -611,11 +614,11 @@ func configApiRoutes() {
 			Width:  300 * 3,
 			Height: 130 * 3,
 			Background: chart.Style{
-				FillColor: drawing.Color{249, 246, 241, 255},
+				FillColor: drawing.Color{R: 249, G: 246, B: 241, A: 255},
 			},
 			XAxis: chart.XAxis{
 				Style: chart.Style{
-					//Show:     true,
+					Show:     true,
 					FontSize: 20,
 				},
 				TickPosition: chart.TickPositionBetweenTicks,
@@ -625,7 +628,7 @@ func configApiRoutes() {
 			},
 			YAxis: chart.YAxis{
 				Style: chart.Style{
-					//Show:     true,
+					Show:     true,
 					FontSize: 20,
 				},
 				Range: &chart.ContinuousRange{
@@ -642,7 +645,7 @@ func configApiRoutes() {
 			YAxisSecondary: chart.YAxis{
 				//NameStyle: chart.StyleShow(),
 				Style: chart.Style{
-					//Show:     true,
+					Show:     true,
 					FontSize: 20,
 				},
 				Range: &chart.ContinuousRange{
@@ -659,18 +662,18 @@ func configApiRoutes() {
 			Series: []chart.Series{
 				chart.ContinuousSeries{
 					Style: chart.Style{
-						//Show:        true,
-						StrokeColor: drawing.Color{249, 246, 241, 255},
-						FillColor:   drawing.Color{249, 246, 241, 255},
+						Show:        true,
+						StrokeColor: drawing.Color{R: 249, G: 246, B: 241, A: 255},
+						FillColor:   drawing.Color{R: 249, G: 246, B: 241, A: 255},
 					},
 					XValues: Xals,
 					YValues: Bkg,
 				},
 				chart.ContinuousSeries{
 					Style: chart.Style{
-						//Show:        true,
-						StrokeColor: drawing.Color{0, 204, 102, 200},
-						FillColor:   drawing.Color{0, 204, 102, 200},
+						Show:        true,
+						StrokeColor: drawing.Color{R: 0, G: 204, B: 102, A: 200},
+						FillColor:   drawing.Color{R: 0, G: 204, B: 102, A: 200},
 					},
 					XValues: Xals,
 					YValues: AvgDelay,
@@ -678,17 +681,17 @@ func configApiRoutes() {
 				},
 				chart.ContinuousSeries{
 					Style: chart.Style{
-						//Show:        true,
-						StrokeColor: drawing.Color{255, 0, 0, 200},
-						FillColor:   drawing.Color{255, 0, 0, 200},
+						Show:        true,
+						StrokeColor: drawing.Color{R: 255, G: 0, B: 0, A: 200},
+						FillColor:   drawing.Color{R: 255, G: 0, B: 0, A: 200},
 					},
 					XValues: Xals,
 					YValues: LossPk,
 				},
 			},
 		}
-		graph.Render(chart.PNG, w)
 
+		graph.Render(chart.PNG, w)
 	})
 
 	//代理访问

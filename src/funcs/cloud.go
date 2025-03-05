@@ -1,8 +1,9 @@
 package funcs
 
 import (
+	"smartping/src/g"
+
 	"github.com/cihub/seelog"
-	"github.com/smartping/smartping/src/g"
 )
 
 func StartCloudMonitor() {

@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/cihub/seelog"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/smartping/smartping/src/g"
-	"github.com/smartping/smartping/src/nettools"
 	"net/smtp"
+	"smartping/src/g"
+	"smartping/src/nettools"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/cihub/seelog"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func StartAlert() {
