@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"smartping/src/funcs"
@@ -26,7 +26,7 @@ func configApiRoutes() {
 	http.HandleFunc("/api/config.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) && !AuthAgentIp(r.RemoteAddr, true) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		r.ParseForm()
@@ -52,13 +52,13 @@ func configApiRoutes() {
 	http.HandleFunc("/api/ping.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) && !AuthAgentIp(r.RemoteAddr, true) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		r.ParseForm()
 		if len(r.Form["ip"]) == 0 {
 			o := "Missing Param !"
-			http.Error(w, o, 406)
+			http.Error(w, o, http.StatusNotAcceptable)
 			return
 		}
 		var tableip string
@@ -97,7 +97,7 @@ func configApiRoutes() {
 		var avgdelay []string
 		var losspk []string
 		timwwnum := map[string]int{}
-		for i := 0; i < cnt+1; i++ {
+		for i := range cnt + 1 {
 			ntime := time.Unix(timeStart, 0).Format("2006-01-02 15:04")
 			timwwnum[ntime] = i
 			lastcheck = append(lastcheck, ntime)
@@ -147,7 +147,7 @@ func configApiRoutes() {
 	http.HandleFunc("/api/topology.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) && !AuthAgentIp(r.RemoteAddr, true) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		preout := make(map[string]string)
@@ -166,7 +166,7 @@ func configApiRoutes() {
 	http.HandleFunc("/api/alert.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) && !AuthAgentIp(r.RemoteAddr, true) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		type DateList struct {
@@ -226,7 +226,7 @@ func configApiRoutes() {
 	http.HandleFunc("/api/mapping.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) && !AuthAgentIp(r.RemoteAddr, true) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		m, _ := time.ParseDuration("-1m")
@@ -272,7 +272,7 @@ func configApiRoutes() {
 	http.HandleFunc("/api/tools.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) && !AuthAgentIp(r.RemoteAddr, true) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		preout := g.ToolsRes{}
@@ -305,7 +305,7 @@ func configApiRoutes() {
 		preout.Ip = ipaddr.String()
 		var channel chan float64 = make(chan float64, 5)
 		var wg sync.WaitGroup
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			wg.Add(1)
 			go func() {
 				delay, err := nettools.RunPing(ipaddr, 3*time.Second, 64, i)
@@ -319,24 +319,22 @@ func configApiRoutes() {
 			time.Sleep(time.Duration(100 * time.Millisecond))
 		}
 		wg.Wait()
-		for i := 0; i < 5; i++ {
-			select {
-			case delay := <-channel:
-				if delay != -1.00 {
-					preout.Ping.AvgDelay = preout.Ping.AvgDelay + delay
-					if preout.Ping.MaxDelay < delay {
-						preout.Ping.MaxDelay = delay
-					}
-					if preout.Ping.MinDelay == -1 || preout.Ping.MinDelay > delay {
-						preout.Ping.MinDelay = delay
-					}
-					preout.Ping.RevcPk = preout.Ping.RevcPk + 1
-				} else {
-					lossPK = lossPK + 1
+		for range 5 {
+			delay := <-channel
+			if delay != -1.00 {
+				preout.Ping.AvgDelay = preout.Ping.AvgDelay + delay
+				if preout.Ping.MaxDelay < delay {
+					preout.Ping.MaxDelay = delay
 				}
-				preout.Ping.SendPk = preout.Ping.SendPk + 1
-				preout.Ping.LossPk = int((float64(lossPK) / float64(preout.Ping.SendPk)) * 100)
+				if preout.Ping.MinDelay == -1 || preout.Ping.MinDelay > delay {
+					preout.Ping.MinDelay = delay
+				}
+				preout.Ping.RevcPk = preout.Ping.RevcPk + 1
+			} else {
+				lossPK = lossPK + 1
 			}
+			preout.Ping.SendPk = preout.Ping.SendPk + 1
+			preout.Ping.LossPk = int((float64(lossPK) / float64(preout.Ping.SendPk)) * 100)
 		}
 		if preout.Ping.RevcPk > 0 {
 			preout.Ping.AvgDelay = preout.Ping.AvgDelay / float64(preout.Ping.RevcPk)
@@ -354,7 +352,7 @@ func configApiRoutes() {
 	http.HandleFunc("/api/saveconfig.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) && !AuthAgentIp(r.RemoteAddr, true) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		preout := make(map[string]string)
@@ -516,7 +514,7 @@ func configApiRoutes() {
 	http.HandleFunc("/api/sendmailtest.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) && !AuthAgentIp(r.RemoteAddr, true) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		preout := make(map[string]string)
@@ -557,7 +555,7 @@ func configApiRoutes() {
 	http.HandleFunc("/api/graph.png", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -587,7 +585,7 @@ func configApiRoutes() {
 			GraphText(85, 70, "ERROR CODE "+strconv.Itoa(resp.StatusCode)).Save(w)
 			return
 		}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		err = json.Unmarshal(body, &config)
 		if err != nil {
 			GraphText(80, 70, "PARSE DATA ERROR").Save(w)
@@ -622,7 +620,7 @@ func configApiRoutes() {
 					FontSize: 20,
 				},
 				TickPosition: chart.TickPositionBetweenTicks,
-				ValueFormatter: func(v interface{}) string {
+				ValueFormatter: func(v any) string {
 					return config.Lastcheck[int(v.(float64))][11:16]
 				},
 			},
@@ -635,7 +633,7 @@ func configApiRoutes() {
 					Min: 0.0,
 					Max: 100.0,
 				},
-				ValueFormatter: func(v interface{}) string {
+				ValueFormatter: func(v any) string {
 					if vf, isFloat := v.(float64); isFloat {
 						return fmt.Sprintf("%0.0f", vf)
 					}
@@ -652,7 +650,7 @@ func configApiRoutes() {
 					Min: 0.0,
 					Max: MaxDelay + MaxDelay/10,
 				},
-				ValueFormatter: func(v interface{}) string {
+				ValueFormatter: func(v any) string {
 					if vf, isFloat := v.(float64); isFloat {
 						return fmt.Sprintf("%0.0f", vf)
 					}
@@ -698,14 +696,14 @@ func configApiRoutes() {
 	http.HandleFunc("/api/proxy.json", func(w http.ResponseWriter, r *http.Request) {
 		if !AuthUserIp(r.RemoteAddr) {
 			o := "Your ip address (" + r.RemoteAddr + ")  is not allowed to access this site!"
-			http.Error(w, o, 401)
+			http.Error(w, o, http.StatusUnauthorized)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		r.ParseForm()
 		if len(r.Form["g"]) == 0 {
 			o := "Url Param Error!"
-			http.Error(w, o, 406)
+			http.Error(w, o, http.StatusNotAcceptable)
 			return
 		}
 		to := strconv.Itoa(g.Cfg.Base["Timeout"])
@@ -716,7 +714,7 @@ func configApiRoutes() {
 		defaultto, err := strconv.Atoi(to)
 		if err != nil {
 			o := "Timeout Param Error!"
-			http.Error(w, o, 406)
+			http.Error(w, o, http.StatusNotAcceptable)
 			return
 		}
 		timeout := time.Duration(time.Duration(defaultto) * time.Second)
@@ -726,15 +724,15 @@ func configApiRoutes() {
 		resp, err := client.Get(url)
 		if err != nil {
 			o := "Request Remote Data Error:" + err.Error()
-			http.Error(w, o, 503)
+			http.Error(w, o, http.StatusServiceUnavailable)
 			return
 		}
 		defer resp.Body.Close()
 		resCode := resp.StatusCode
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			o := "Read Remote Data Error:" + err.Error()
-			http.Error(w, o, 503)
+			http.Error(w, o, http.StatusServiceUnavailable)
 			return
 		}
 		if resCode != 200 {
