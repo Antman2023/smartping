@@ -642,7 +642,7 @@ func configApiRoutes() {
 				},
 				ValueFormatter: func(v any) string {
 					if vf, isFloat := v.(float64); isFloat {
-						return fmt.Sprintf("%0.0f", vf)
+						return fmt.Sprintf("%0.0f%%", vf)
 					}
 					return ""
 				},
