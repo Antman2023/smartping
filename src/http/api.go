@@ -113,6 +113,13 @@ func configApiRoutes() {
 		if err != nil {
 			seelog.Error("[func:/api/ping.json] Query ", err)
 		} else {
+			start := time.Now()
+			// Use map for O(1) lookup instead of linear search
+			timeIndexMap := make(map[string]int, len(lastcheck))
+			for i, t := range lastcheck {
+				timeIndexMap[t] = i
+			}
+
 			for rows.Next() {
 				l := new(g.PingLog)
 				err := rows.Scan(&l.Logtime, &l.Maxdelay, &l.Mindelay, &l.Avgdelay, &l.Losspk)
@@ -120,16 +127,16 @@ func configApiRoutes() {
 					seelog.Error("[/api/ping.json] Rows", err)
 					continue
 				}
-				for n, v := range lastcheck {
-					if v == l.Logtime {
-						maxdelay[n] = l.Maxdelay
-						mindelay[n] = l.Mindelay
-						avgdelay[n] = l.Avgdelay
-						losspk[n] = l.Losspk
-						break
-					}
+
+				if idx, exists := timeIndexMap[l.Logtime]; exists {
+					maxdelay[idx] = l.Maxdelay
+					mindelay[idx] = l.Mindelay
+					avgdelay[idx] = l.Avgdelay
+					losspk[idx] = l.Losspk
 				}
 			}
+			elapsed := time.Since(start)
+			seelog.Info("[func:/api/ping.json] Query ", elapsed)
 			rows.Close()
 		}
 		preout := map[string][]string{
