@@ -96,6 +96,9 @@
   <input type="hidden" id="pannelurl" value=""/>
   <div class="modal-dialog">
     <div class="modal-content" >
+        <div style="text-align:center;padding-top:10px;padding-bottom:5px;">
+          <h4><span id="target-ip"></span></h4>
+        </div>
         <div style="text-align:center;padding-top:10px;">
           <b>StartTime:</b>&nbsp;<input id="starttime" type='text'  onClick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})" style="width:120px;" >
           <b>EndTime:</b>&nbsp;<input id="endtime" type='text'  onClick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"  style="width:120px;" >
@@ -156,6 +159,7 @@
         var modalWidth = $("#charts").width();
         var left = "-" + parseInt(modalWidth) / 2 + "px";
         $('#charts').modal('show').css({"margin-left":left});
+        $('#target-ip').text($(this).find('b').text());
         url=$(this).attr("apiurl");
         $("#pannelurl").attr("value",url);
         $.get(url).done(function (data) {
