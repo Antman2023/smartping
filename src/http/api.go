@@ -73,7 +73,7 @@ func configApiRoutes() {
 				tms, _ := time.Parse("2006-01-02 15:04", timeStartStr)
 				timeStart = tms.Unix() - 8*60*60
 			} else {
-				timeStart = time.Now().Unix() - 2*60*60
+				timeStart = time.Now().Unix() - 6*60*60
 				timeStartStr = time.Unix(timeStart, 0).Format("2006-01-02 15:04")
 			}
 			timeEndStr = r.Form["endtime"][0]
@@ -85,7 +85,7 @@ func configApiRoutes() {
 				timeEndStr = time.Unix(timeEnd, 0).Format("2006-01-02 15:04")
 			}
 		} else {
-			timeStart = time.Now().Unix() - 2*60*60
+			timeStart = time.Now().Unix() - 6*60*60
 			timeStartStr = time.Unix(timeStart, 0).Format("2006-01-02 15:04")
 			timeEnd = time.Now().Unix()
 			timeEndStr = time.Unix(timeEnd, 0).Format("2006-01-02 15:04")
