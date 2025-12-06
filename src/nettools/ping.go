@@ -3,11 +3,12 @@ package nettools
 import (
 	"bytes"
 	"encoding/binary"
-	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
 	"math/rand"
 	"net"
 	"time"
+
+	"golang.org/x/net/icmp"
+	"golang.org/x/net/ipv4"
 )
 
 type pkg struct {
@@ -42,6 +43,7 @@ func (t *pkg) Send(ttl int) ICMP {
 	}
 	defer t.conn.Close()
 	t.ipv4conn = ipv4.NewPacketConn(t.conn)
+	t.ipv4conn.SetTOS(0x0)
 	defer t.ipv4conn.Close()
 	hop.Error = t.conn.SetReadDeadline(time.Now().Add(t.maxrtt))
 	if nil != hop.Error {
@@ -117,7 +119,7 @@ func RunPing(IpAddr *net.IPAddr, maxrtt time.Duration, maxttl int, seq int) (flo
 	res.maxrtt = maxrtt
 	res.id = rand.Intn(65535)
 	res.seq = seq
-	res.msg = icmp.Message{Type: ipv4.ICMPTypeEcho, Code: 0, Body: &icmp.Echo{ID: res.id, Seq: res.seq, Data: bytes.Repeat([]byte("Go Smart Ping!"), 4) }}
+	res.msg = icmp.Message{Type: ipv4.ICMPTypeEcho, Code: 0, Body: &icmp.Echo{ID: res.id, Seq: res.seq, Data: bytes.Repeat([]byte("Go Smart Ping!"), 4)}}
 	res.netmsg, err = res.msg.Marshal(nil)
 	if nil != err {
 		return 0, err
