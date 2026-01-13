@@ -603,8 +603,20 @@ func configApiRoutes() {
 		AvgDelay := []float64{}
 		LossPk := []float64{}
 		Bkg := []float64{}
+		minLen := len(config.Lastcheck)
+		if len(config.AvgDelay) < minLen {
+			minLen = len(config.AvgDelay)
+		}
+		if len(config.LossPk) < minLen {
+			minLen = len(config.LossPk)
+		}
+		if minLen == 0 {
+			GraphText(80, 70, "NO DATA").Save(w)
+			return
+		}
+
 		MaxDelay := 0.0
-		for i := 0; i < len(config.LossPk); i = i + 1 {
+		for i := 0; i < minLen; i = i + 1 {
 			avg, _ := strconv.ParseFloat(config.AvgDelay[i], 64)
 			if MaxDelay < avg {
 				MaxDelay = avg
@@ -614,6 +626,9 @@ func configApiRoutes() {
 			LossPk = append(LossPk, losspk)
 			Xals = append(Xals, float64(i))
 			Bkg = append(Bkg, 100.0)
+		}
+		if MaxDelay == 0.0 {
+			MaxDelay = 1.0
 		}
 		graph := chart.Chart{
 			Width:  300 * 3,
@@ -628,7 +643,18 @@ func configApiRoutes() {
 				},
 				TickPosition: chart.TickPositionBetweenTicks,
 				ValueFormatter: func(v any) string {
-					return config.Lastcheck[int(v.(float64))][11:16]
+					vf, ok := v.(float64)
+					if !ok {
+						return ""
+					}
+					idx := int(vf)
+					if idx < 0 || idx >= len(config.Lastcheck) {
+						return ""
+					}
+					if len(config.Lastcheck[idx]) < 16 {
+						return config.Lastcheck[idx]
+					}
+					return config.Lastcheck[idx][11:16]
 				},
 			},
 			YAxis: chart.YAxis{
